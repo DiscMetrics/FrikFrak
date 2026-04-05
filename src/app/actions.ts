@@ -14,6 +14,7 @@ import {
   resolveReport,
   softDeleteComment,
   softDeletePost,
+  updateFeedbackStatus,
 } from "@/lib/data";
 import {
   authenticateWithUsername,
@@ -36,7 +37,8 @@ const authSchema = z.object({
 
 const postSchema = z.object({
   categoryId: z.string().uuid(),
-  body: z.string().min(4, "Posts must be at least 4 characters.").max(600),
+  title: z.string().trim().min(3, "Posts need a title.").max(140),
+  body: z.string().trim().max(600).optional().default(""),
 });
 
 const commentSchema = z.object({
@@ -105,6 +107,7 @@ export async function createPostAction(formData: FormData) {
   const redirectPath = String(formData.get("redirectPath") || "/feed");
   const parsed = postSchema.safeParse({
     categoryId: formData.get("categoryId"),
+    title: formData.get("title"),
     body: formData.get("body"),
   });
 
@@ -113,7 +116,15 @@ export async function createPostAction(formData: FormData) {
   }
 
   try {
-    await createPostForUser(user.id, parsed.data.categoryId, parsed.data.body.trim());
+    await createPostForUser({
+      userId: user.id,
+      categoryId: parsed.data.categoryId,
+      postType: "text",
+      title: parsed.data.title.trim(),
+      body: parsed.data.body.trim() || null,
+      externalUrl: null,
+      tags: [],
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to create post.";
     redirect(`${redirectPath}?error=${encodeMessage(message)}`);
@@ -250,4 +261,18 @@ export async function adminRemoveCommentAction(formData: FormData) {
   await softDeleteComment(String(formData.get("commentId")), admin.id, true);
   revalidatePath("/admin/moderation");
   redirect("/admin/moderation");
+}
+
+export async function resolveFeedbackAction(formData: FormData) {
+  await requireAdmin();
+  await updateFeedbackStatus(String(formData.get("feedbackId")), "resolved");
+  revalidatePath("/admin/feedback");
+  redirect("/admin/feedback");
+}
+
+export async function archiveFeedbackAction(formData: FormData) {
+  await requireAdmin();
+  await updateFeedbackStatus(String(formData.get("feedbackId")), "archived");
+  revalidatePath("/admin/feedback");
+  redirect("/admin/feedback");
 }

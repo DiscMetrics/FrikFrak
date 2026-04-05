@@ -7,10 +7,31 @@
   --card: #fffdf8;
   --card-strong: #f7f4ee;
   --line: #d8d1c5;
+  --control: #fffdf8;
+  --control-muted: #f3eee4;
+  --control-hover: #ebe3d6;
+  --control-text: #52606a;
   --accent: #b94822;
   --accent-soft: #f2c7b9;
   --success: #2d6a4f;
   --danger: #8f2d2d;
+}
+
+:root[data-theme="dark"] {
+  --background: #171818;
+  --foreground: #ece6da;
+  --muted: #b1b3ad;
+  --card: #232422;
+  --card-strong: #2c2d2b;
+  --line: #4a4c48;
+  --control: #2b2c29;
+  --control-muted: #343532;
+  --control-hover: #40413d;
+  --control-text: #d5d0c4;
+  --accent: #ef7f56;
+  --accent-soft: rgba(239, 127, 86, 0.18);
+  --success: #5ab37c;
+  --danger: #e37a7a;
 }
 
 @theme inline {
@@ -30,6 +51,12 @@ html {
     linear-gradient(180deg, #f6f2ea 0%, #efe8dc 100%);
 }
 
+html[data-theme="dark"] {
+  background:
+    radial-gradient(circle at top, rgba(239, 127, 86, 0.18), transparent 28%),
+    linear-gradient(180deg, #1a1b1a 0%, #101111 100%);
+}
+
 body {
   min-height: 100vh;
   color: var(--foreground);
@@ -47,6 +74,18 @@ select {
   font: inherit;
 }
 
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+  background: var(--control) !important;
+  color: var(--foreground);
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] button {
+  color: inherit;
+}
+
 ::selection {
   background: rgba(185, 72, 34, 0.18);
 }
@@ -55,6 +94,10 @@ select {
   border: 1px solid var(--line);
   background: var(--card);
   box-shadow: 0 10px 30px rgba(24, 33, 38, 0.06);
+}
+
+html[data-theme="dark"] .card {
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
 }
 
 .muted {
@@ -68,4 +111,26 @@ select {
 
 .accent-ring:focus-visible {
   outline-color: var(--accent);
+}
+
+.surface-input {
+  border: 1px solid var(--line);
+  background: var(--control);
+  color: var(--foreground);
+}
+
+.secondary-button {
+  border: 1px solid var(--line);
+  background: var(--control);
+  color: var(--control-text);
+}
+
+.secondary-button:hover {
+  background: var(--control-hover);
+}
+
+.tag-chip {
+  border: 1px solid var(--line);
+  background: var(--control);
+  color: var(--accent);
 }

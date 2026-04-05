@@ -6,6 +6,8 @@ import { getSessionUser } from "@/lib/auth";
 import { getTagFeed } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 
+export const dynamic = "force-dynamic";
+
 export default async function TagPage({
   params,
 }: {
@@ -15,7 +17,7 @@ export default async function TagPage({
 
   if (!isSupabaseConfigured()) {
     return (
-      <SiteShell title={`#${tag}`} subtitle="Tag pages unlock once Supabase is configured.">
+      <SiteShell title={tag} subtitle="Tag pages unlock once Supabase is configured." currentPath="/tags">
         <SetupNotice />
       </SiteShell>
     );
@@ -25,8 +27,11 @@ export default async function TagPage({
 
   return (
     <SiteShell
-      title={`#${tag}`}
-      subtitle="Hashtag pages are searchable now, with room for trending spaces later."
+      title={tag}
+      subtitle="Browse posts connected by explicit post tags."
+      currentPath="/tags"
+      backHref="/tags"
+      backLabel="Tags"
     >
       <div className="space-y-5">
         {posts.length ? (

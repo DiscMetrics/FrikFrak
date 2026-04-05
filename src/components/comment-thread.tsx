@@ -1,4 +1,6 @@
-import { createCommentAction, deleteCommentAction } from "@/app/actions";
+"use client";
+
+import { useState, useTransition } from "react";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { ReportForm } from "@/components/report-form";
 import { VoteControls } from "@/components/vote-controls";
@@ -9,10 +11,12 @@ export function CommentThread({
   comments,
   postId,
   viewer,
+  onReply,
 }: {
   comments: CommentNode[];
   postId: string;
   viewer: SessionUser | null;
+  onReply: (body: string, parentCommentId: string | null) => Promise<void>;
 }) {
   if (comments.length === 0) {
     return (
@@ -31,6 +35,7 @@ export function CommentThread({
           postId={postId}
           viewer={viewer}
           depth={0}
+          onReply={onReply}
         />
       ))}
     </div>
@@ -42,14 +47,23 @@ function CommentBranch({
   postId,
   viewer,
   depth,
+  onReply,
 }: {
   comment: CommentNode;
   postId: string;
   viewer: SessionUser | null;
   depth: number;
+  onReply: (body: string, parentCommentId: string | null) => Promise<void>;
 }) {
+  const [body, setBody] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
   return (
-    <div className={cn("relative", depth > 0 && "ml-4 border-l border-[var(--line)] pl-4 sm:ml-6 sm:pl-6")}>
+    <div
+      id={`comment-${comment.id}`}
+      className={cn("relative", depth > 0 && "ml-4 border-l border-[var(--line)] pl-4 sm:ml-6 sm:pl-6")}
+    >
       <div className="card rounded-[1.5rem] p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
@@ -73,7 +87,6 @@ function CommentBranch({
             targetType="comment"
             score={comment.score}
             viewerVote={comment.viewer_vote}
-            returnPath={`/p/${postId}`}
           />
         </div>
 
@@ -82,32 +95,70 @@ function CommentBranch({
             <summary className="cursor-pointer font-medium hover:text-[var(--accent)]">
               Reply
             </summary>
-            <form action={createCommentAction} className="mt-3 space-y-3">
-              <input type="hidden" name="postId" value={postId} />
-              <input type="hidden" name="parentCommentId" value={comment.id} />
+            <form
+              className="mt-3 space-y-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setError(null);
+                startTransition(async () => {
+                  try {
+                    await onReply(body.trim(), comment.id);
+                    setBody("");
+                  } catch (submissionError) {
+                    setError(
+                      submissionError instanceof Error
+                        ? submissionError.message
+                        : "Unable to add reply.",
+                    );
+                  }
+                });
+              }}
+            >
               <textarea
                 name="body"
                 rows={3}
                 maxLength={400}
-                className="accent-ring w-full rounded-2xl border border-[var(--line)] bg-white px-3 py-2 text-sm outline-none"
+                value={body}
+                onChange={(event) => setBody(event.target.value)}
+                className="surface-input accent-ring w-full rounded-2xl px-3 py-2 text-sm outline-none"
                 placeholder="Reply anonymously"
                 required
               />
-              <button className="rounded-xl bg-[var(--accent)] px-3 py-2 font-medium text-white">
-                Reply
+              {error ? <p className="text-xs text-[var(--danger)]">{error}</p> : null}
+              <button
+                disabled={isPending || body.trim().length === 0}
+                className="rounded-xl bg-[var(--accent)] px-3 py-2 font-medium text-white disabled:opacity-60"
+              >
+                {isPending ? "Replying..." : "Reply"}
               </button>
             </form>
           </details>
-          <ReportForm targetId={comment.id} targetType="comment" returnPath={`/p/${postId}`} />
+          <ReportForm targetId={comment.id} targetType="comment" />
           {viewer?.id === comment.author_user_id && !comment.is_deleted ? (
-            <form action={deleteCommentAction}>
-              <input type="hidden" name="commentId" value={comment.id} />
-              <input type="hidden" name="postId" value={postId} />
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                startTransition(async () => {
+                  const response = await fetch(`/api/comments/${comment.id}`, {
+                    method: "DELETE",
+                  });
+
+                  if (response.ok) {
+                    window.location.assign(
+                      `/p/${postId}?message=${encodeURIComponent("Comment deleted.")}`,
+                    );
+                  } else {
+                    setError("Unable to delete comment.");
+                  }
+                });
+              }}
+            >
               <ConfirmSubmitButton
                 confirmMessage="Delete this comment? The text will be replaced with a deleted placeholder, but child replies will remain visible."
-                className="font-medium text-[var(--danger)]"
+                className="font-medium text-[var(--danger)] disabled:opacity-60"
+                disabled={isPending}
               >
-                Delete
+                {isPending ? "Deleting..." : "Delete"}
               </ConfirmSubmitButton>
             </form>
           ) : null}
@@ -123,6 +174,7 @@ function CommentBranch({
               postId={postId}
               viewer={viewer}
               depth={depth + 1}
+              onReply={onReply}
             />
           ))}
         </div>

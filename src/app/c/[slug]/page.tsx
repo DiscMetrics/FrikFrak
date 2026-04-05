@@ -1,12 +1,13 @@
+import { FeedClient } from "@/components/feed-client";
 import { MessageBanner } from "@/components/message-banner";
-import { PostCard } from "@/components/post-card";
-import { PostComposer } from "@/components/post-composer";
 import { SetupNotice } from "@/components/setup-notice";
 import { SiteShell } from "@/components/site-shell";
 import { getSessionUser } from "@/lib/auth";
-import { getFeedForCategory } from "@/lib/data";
+import { getFeedForCategory, getPopularTags } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { decodeMessage } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 export default async function CategoryPage({
   params,
@@ -30,9 +31,10 @@ export default async function CategoryPage({
     );
   }
 
-  const [{ category, posts }, viewer] = await Promise.all([
+  const [{ category, posts }, viewer, tags] = await Promise.all([
     getFeedForCategory(slug),
     getSessionUser(),
+    getPopularTags(24),
   ]);
 
   if (!category) {
@@ -59,29 +61,13 @@ export default async function CategoryPage({
       <div className="space-y-5">
         {error ? <MessageBanner tone="error">{error}</MessageBanner> : null}
         {message ? <MessageBanner tone="success">{message}</MessageBanner> : null}
-        {viewer ? (
-          <PostComposer category={category} returnPath={`/c/${slug}`} />
-        ) : (
-          <MessageBanner tone="info">
-            Log in to post, vote, report, or join the thread.
-          </MessageBanner>
-        )}
-        {posts.length ? (
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                viewer={viewer}
-                returnPath={`/c/${slug}`}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="card rounded-[2rem] p-6 text-sm muted">
-            Nothing here yet. The first anonymous post sets the tone.
-          </div>
-        )}
+        <FeedClient
+          category={category}
+          initialPosts={posts}
+          viewer={viewer}
+          returnPath={`/c/${slug}`}
+          suggestedTags={tags.map((entry) => entry.tag)}
+        />
       </div>
     </SiteShell>
   );

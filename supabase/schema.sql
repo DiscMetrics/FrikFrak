@@ -25,10 +25,14 @@ create table if not exists public.posts (
   id uuid primary key default gen_random_uuid(),
   category_id uuid not null references public.categories(id) on delete restrict,
   author_user_id uuid not null references public.users(id) on delete cascade,
+  post_type text not null default 'text' check (post_type in ('text', 'link')),
+  title text not null,
   body text,
+  external_url text,
   score integer not null default 0,
   comment_count integer not null default 0,
   report_count integer not null default 0,
+  tag_list text[] not null default '{}',
   hashtag_list text[] not null default '{}',
   is_deleted boolean not null default false,
   deleted_at timestamptz,
@@ -38,6 +42,7 @@ create table if not exists public.posts (
 );
 
 create index if not exists posts_category_created_idx on public.posts(category_id, created_at desc);
+create index if not exists posts_tag_idx on public.posts using gin(tag_list);
 create index if not exists posts_hashtag_idx on public.posts using gin(hashtag_list);
 
 create table if not exists public.comments (
@@ -89,6 +94,35 @@ create table if not exists public.thread_participants (
   unique (post_id, user_id),
   unique (post_id, participant_number)
 );
+
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  recipient_user_id uuid not null references public.users(id) on delete cascade,
+  actor_user_id uuid not null references public.users(id) on delete cascade,
+  post_id uuid not null references public.posts(id) on delete cascade,
+  comment_id uuid references public.comments(id) on delete cascade,
+  parent_comment_id uuid references public.comments(id) on delete set null,
+  notification_type text not null check (notification_type in ('post_reply', 'comment_reply')),
+  is_read boolean not null default false,
+  read_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists notifications_recipient_idx
+on public.notifications(recipient_user_id, created_at desc);
+
+create table if not exists public.feedback_submissions (
+  id uuid primary key default gen_random_uuid(),
+  submitter_user_id uuid references public.users(id) on delete set null,
+  optional_name text,
+  body text not null,
+  status text not null default 'open' check (status in ('open', 'resolved', 'archived')),
+  created_at timestamptz not null default now(),
+  resolved_at timestamptz
+);
+
+create index if not exists feedback_status_idx
+on public.feedback_submissions(status, created_at desc);
 
 create table if not exists public.hashtags (
   id uuid primary key default gen_random_uuid(),

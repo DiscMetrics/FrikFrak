@@ -7,6 +7,8 @@ import { getCategories } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { decodeMessage } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminCategoriesPage({
   searchParams,
 }: {
@@ -31,6 +33,8 @@ export default async function AdminCategoriesPage({
       title="Categories"
       subtitle="Admin-created spaces keep launch cleaner while still making future expansion easy."
       currentPath="/admin/categories"
+      backHref="/admin"
+      backLabel="Admin"
     >
       <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
         <form action={createCategoryAction} className="card rounded-[2rem] p-5 space-y-4">
@@ -39,30 +43,29 @@ export default async function AdminCategoriesPage({
           <input
             name="name"
             placeholder="Name"
-            className="accent-ring w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm outline-none"
+            className="surface-input accent-ring w-full rounded-2xl px-4 py-3 text-sm outline-none"
             required
           />
           <input
             name="slug"
             placeholder="Optional slug override"
-            className="accent-ring w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm outline-none"
+            className="surface-input accent-ring w-full rounded-2xl px-4 py-3 text-sm outline-none"
           />
           <select
             name="categoryType"
-            className="accent-ring w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm outline-none"
+            className="surface-input accent-ring w-full rounded-2xl px-4 py-3 text-sm outline-none"
             defaultValue="school"
           >
             <option value="school">School</option>
             <option value="tournament">Tournament</option>
             <option value="region">Region</option>
             <option value="general">General</option>
-            <option value="tag">Tag</option>
           </select>
           <textarea
             name="description"
             rows={4}
             placeholder="Short description"
-            className="accent-ring w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm outline-none"
+            className="surface-input accent-ring w-full rounded-2xl px-4 py-3 text-sm outline-none"
           />
           <button className="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white">
             Create category
@@ -90,7 +93,7 @@ export default async function AdminCategoriesPage({
                   {category.slug !== "general" ? (
                     <form action={archiveCategoryAction}>
                       <input type="hidden" name="categoryId" value={category.id} />
-                      <button className="rounded-xl border border-[var(--line)] px-3 py-2 text-xs font-medium">
+                      <button className="secondary-button rounded-xl px-3 py-2 text-xs font-medium">
                         Archive
                       </button>
                     </form>

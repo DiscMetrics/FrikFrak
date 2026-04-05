@@ -2,6 +2,9 @@ export type UserRole = "user" | "admin";
 export type CategoryType = "general" | "school" | "tournament" | "region" | "tag";
 export type ModerationStatus = "active" | "removed";
 export type VoteTargetType = "post" | "comment";
+export type NotificationType = "post_reply" | "comment_reply";
+export type FeedbackStatus = "open" | "resolved" | "archived";
+export type PostType = "text" | "link";
 export type ReportReason =
   | "harassment"
   | "spam"
@@ -29,10 +32,14 @@ export interface PostRecord {
   id: string;
   category_id: string;
   author_user_id: string;
+  post_type: PostType;
+  title: string;
   body: string | null;
+  external_url: string | null;
   score: number;
   comment_count: number;
   report_count: number;
+  tag_list: string[];
   hashtag_list: string[];
   is_deleted: boolean;
   deleted_at: string | null;
@@ -64,6 +71,51 @@ export interface ReportRecord {
   status: "open" | "resolved";
   notes: string | null;
   created_at: string;
+}
+
+export interface FeedDirectoryItem extends Category {
+  post_count: number;
+  recent_activity_at: string | null;
+}
+
+export interface TagDirectoryItem {
+  tag: string;
+  usage_count: number;
+  last_used_at: string | null;
+}
+
+export interface NotificationRecord {
+  id: string;
+  recipient_user_id: string;
+  actor_user_id: string;
+  post_id: string;
+  comment_id: string | null;
+  parent_comment_id: string | null;
+  notification_type: NotificationType;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface InboxItem extends NotificationRecord {
+  reply_preview: string | null;
+  link_path: string;
+}
+
+export interface FeedbackSubmission {
+  id: string;
+  submitter_user_id: string | null;
+  optional_name: string | null;
+  body: string;
+  status: FeedbackStatus;
+  created_at: string;
+  resolved_at: string | null;
+}
+
+export interface ReportReviewItem extends ReportRecord {
+  target_preview: string | null;
+  target_deleted: boolean;
+  target_path: string | null;
 }
 
 export interface ThreadParticipant {

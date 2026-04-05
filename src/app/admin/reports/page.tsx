@@ -1,25 +1,38 @@
+import Link from "next/link";
 import { resolveReportAction } from "@/app/actions";
 import { SiteShell } from "@/components/site-shell";
 import { SetupNotice } from "@/components/setup-notice";
 import { requireAdmin } from "@/lib/auth";
-import { getReports } from "@/lib/data";
+import { getReportReviewItems } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatRelativeDate } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminReportsPage() {
   if (!isSupabaseConfigured()) {
     return (
-      <SiteShell title="Reports" subtitle="Connect Supabase to review reports." currentPath="/admin/reports">
+      <SiteShell
+        title="Reports"
+        subtitle="Connect Supabase to review reports."
+        currentPath="/admin/reports"
+      >
         <SetupNotice />
       </SiteShell>
     );
   }
 
   await requireAdmin();
-  const reports = await getReports();
+  const reports = await getReportReviewItems();
 
   return (
-    <SiteShell title="Reports" subtitle="Preset reasons with a simple admin queue." currentPath="/admin/reports">
+    <SiteShell
+      title="Reports"
+      subtitle="Preset reasons with actual content previews so moderators can review quickly."
+      currentPath="/admin/reports"
+      backHref="/admin"
+      backLabel="Admin"
+    >
       <div className="card rounded-[2rem] p-5">
         <div className="space-y-3">
           {reports.length === 0 ? (
@@ -31,16 +44,37 @@ export default async function AdminReportsPage() {
                 className="rounded-2xl border border-[var(--line)] bg-[var(--card-strong)] p-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="font-semibold">
                       {report.target_type} • {report.reason.replace("_", " ")}
                     </div>
                     <div className="mt-1 text-sm muted">
                       {formatRelativeDate(report.created_at)} • target {report.target_id}
                     </div>
+                    <div className="mt-3 rounded-2xl border border-[var(--line)] bg-[var(--control)] px-4 py-3 text-sm">
+                      {report.target_preview ? (
+                        <p className="whitespace-pre-wrap leading-6">
+                          {report.target_preview}
+                        </p>
+                      ) : (
+                        <p className="italic text-stone-400">
+                          {report.target_deleted
+                            ? "This content has already been deleted."
+                            : "Original content could not be found."}
+                        </p>
+                      )}
+                    </div>
                     <div className="mt-2 text-xs uppercase tracking-[0.14em] muted">
                       Status: {report.status}
                     </div>
+                    {report.target_path ? (
+                      <Link
+                        href={report.target_path}
+                        className="mt-3 inline-block text-xs font-semibold uppercase tracking-[0.14em] text-[var(--accent)]"
+                      >
+                        Open target
+                      </Link>
+                    ) : null}
                   </div>
                   {report.status === "open" ? (
                     <form action={resolveReportAction}>

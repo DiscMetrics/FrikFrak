@@ -116,8 +116,8 @@ export async function shouldUserBeAdmin(username: string) {
   const supabase = getServiceSupabase();
   const firstAdmin = process.env.FIRST_ADMIN_USERNAME?.toLowerCase().trim();
 
-  if (firstAdmin && firstAdmin === username.toLowerCase()) {
-    return true;
+  if (firstAdmin) {
+    return firstAdmin === username.toLowerCase();
   }
 
   const { count } = await supabase

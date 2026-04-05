@@ -5,6 +5,8 @@ import { requireAdmin } from "@/lib/auth";
 import { getAdminOverview } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
   if (!isSupabaseConfigured()) {
     return (
@@ -22,6 +24,8 @@ export default async function AdminPage() {
       title="Admin"
       subtitle="Utilitarian tooling for categories, reports, and moderation."
       currentPath="/admin"
+      backHref="/feed"
+      backLabel="Feeds"
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Posts" value={stats.postCount} />
@@ -33,6 +37,7 @@ export default async function AdminPage() {
         <AdminLink href="/admin/categories" title="Categories" body="Create, review, and archive posting spaces." />
         <AdminLink href="/admin/reports" title="Reports" body="Review flagged posts and comments." />
         <AdminLink href="/admin/moderation" title="Moderation" body="Soft-remove posts or comments directly." />
+        <AdminLink href="/admin/feedback" title="Feedback" body="Read temporary developer feedback from users." />
       </div>
     </SiteShell>
   );

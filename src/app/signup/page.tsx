@@ -31,14 +31,14 @@ export default async function SignupPage({
             <input
               name="username"
               placeholder="Username"
-              className="accent-ring w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm outline-none"
+              className="surface-input accent-ring w-full rounded-2xl px-4 py-3 text-sm outline-none"
               required
             />
             <input
               name="password"
               type="password"
               placeholder="Password"
-              className="accent-ring w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm outline-none"
+              className="surface-input accent-ring w-full rounded-2xl px-4 py-3 text-sm outline-none"
               required
             />
             <button className="w-full rounded-2xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white">

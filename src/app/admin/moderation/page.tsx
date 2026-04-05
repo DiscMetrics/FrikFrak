@@ -6,6 +6,8 @@ import { getModerationQueue } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatRelativeDate } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminModerationPage() {
   if (!isSupabaseConfigured()) {
     return (
@@ -23,6 +25,8 @@ export default async function AdminModerationPage() {
       title="Moderation"
       subtitle="Soft-delete content directly when you need to clean up the board."
       currentPath="/admin/moderation"
+      backHref="/admin"
+      backLabel="Admin"
     >
       <div className="grid gap-5 xl:grid-cols-2">
         <section className="card rounded-[2rem] p-5">
