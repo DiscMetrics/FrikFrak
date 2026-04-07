@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { logoutAction } from "@/app/actions";
 import { FeedbackButton } from "@/components/feedback-button";
+import { MobileMenu } from "@/components/mobile-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getSessionUser } from "@/lib/auth";
-import { getCategories, getUnreadNotificationCount } from "@/lib/data";
+import { getUnreadNotificationCount } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
@@ -23,9 +24,7 @@ export async function SiteShell({
   backLabel?: string;
 }) {
   const configured = isSupabaseConfigured();
-  const [viewer, categories] = configured
-    ? await Promise.all([getSessionUser(), getCategories()])
-    : [null, []];
+  const viewer = configured ? await getSessionUser() : null;
   const unreadCount = viewer ? await getUnreadNotificationCount(viewer.id) : 0;
 
   return (
@@ -41,38 +40,11 @@ export async function SiteShell({
           </div>
         </Link>
 
-        <nav className="space-y-2">
-          <NavLink href="/feed" active={currentPath === "/feed"}>
-            Feeds
-          </NavLink>
-          <NavLink href="/tags" active={currentPath === "/tags"}>
-            Tags
-          </NavLink>
-          {viewer ? (
-            <NavLink href="/inbox" active={currentPath === "/inbox"}>
-              Inbox{unreadCount > 0 ? ` (${unreadCount})` : ""}
-            </NavLink>
-          ) : null}
-          <NavLink href="/c/general" active={currentPath === "/c/general"}>
-            General
-          </NavLink>
-          {categories
-            .filter((category) => category.slug !== "general")
-            .map((category) => (
-              <NavLink
-                key={category.id}
-                href={`/c/${category.slug}`}
-                active={currentPath === `/c/${category.slug}`}
-              >
-                {category.name}
-              </NavLink>
-            ))}
-          {viewer?.role === "admin" ? (
-            <NavLink href="/admin" active={currentPath?.startsWith("/admin")}>
-              Admin
-            </NavLink>
-          ) : null}
-        </nav>
+        <SidebarNav
+          currentPath={currentPath}
+          unreadCount={unreadCount}
+          viewer={viewer}
+        />
 
         <div className="mt-8 rounded-2xl border border-[var(--line)] bg-[var(--card-strong)] p-4">
           {viewer ? (
@@ -111,7 +83,30 @@ export async function SiteShell({
       <main className="min-w-0 flex-1">
         <header className="card mb-6 rounded-[2rem] px-5 py-4 sm:px-6">
           <div className="space-y-4">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex items-center justify-between gap-3 lg:hidden">
+              <MobileMenu
+                currentPath={currentPath}
+                unreadCount={unreadCount}
+                viewer={viewer}
+              />
+              {viewer ? (
+                <Link
+                  href="/inbox"
+                  className="secondary-button rounded-xl px-3 py-2 text-sm font-medium"
+                >
+                  Inbox{unreadCount > 0 ? ` (${unreadCount})` : ""}
+                </Link>
+              ) : (
+                <Link
+                  href="/"
+                  className="secondary-button rounded-xl px-3 py-2 text-sm font-medium"
+                >
+                  Home
+                </Link>
+              )}
+            </div>
+
+            <div className="flex items-start justify-between gap-4">
               <div>
                 {backHref ? (
                   <Link
@@ -128,7 +123,7 @@ export async function SiteShell({
                 <h1 className="mt-2 text-3xl font-semibold tracking-tight">{title}</h1>
                 {subtitle ? <p className="mt-2 max-w-2xl text-sm muted">{subtitle}</p> : null}
               </div>
-              <div className="flex items-start gap-3">
+              <div className="hidden items-start gap-3 lg:flex">
                 {viewer ? (
                   <Link
                     href="/inbox"
@@ -137,48 +132,6 @@ export async function SiteShell({
                     Inbox{unreadCount > 0 ? ` (${unreadCount})` : ""}
                   </Link>
                 ) : null}
-                <div className="lg:hidden">
-                  <details className="relative">
-                    <summary className="secondary-button list-none rounded-xl px-3 py-2 text-sm font-medium">
-                      Menu
-                    </summary>
-                    <div className="absolute right-0 z-10 mt-2 w-64 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-3 shadow-lg">
-                      <div className="space-y-2">
-                        <NavLink href="/feed" active={currentPath === "/feed"}>
-                          Feeds
-                        </NavLink>
-                        <NavLink href="/tags" active={currentPath === "/tags"}>
-                          Tags
-                        </NavLink>
-                        {viewer ? (
-                          <NavLink href="/inbox" active={currentPath === "/inbox"}>
-                            Inbox{unreadCount > 0 ? ` (${unreadCount})` : ""}
-                          </NavLink>
-                        ) : null}
-                        <NavLink href="/c/general" active={currentPath === "/c/general"}>
-                          General
-                        </NavLink>
-                        {categories
-                          .filter((category) => category.slug !== "general")
-                          .map((category) => (
-                            <NavLink
-                              key={category.id}
-                              href={`/c/${category.slug}`}
-                              active={currentPath === `/c/${category.slug}`}
-                            >
-                              {category.name}
-                            </NavLink>
-                          ))}
-                        {viewer?.role === "admin" ? (
-                          <NavLink href="/admin" active={currentPath?.startsWith("/admin")}>
-                            Admin
-                          </NavLink>
-                        ) : null}
-                        <ThemeToggle compact />
-                      </div>
-                    </div>
-                  </details>
-                </div>
               </div>
             </div>
           </div>
@@ -188,6 +141,37 @@ export async function SiteShell({
       </main>
       {viewer && !currentPath?.startsWith("/admin") ? <FeedbackButton /> : null}
     </div>
+  );
+}
+
+function SidebarNav({
+  currentPath,
+  unreadCount,
+  viewer,
+}: {
+  currentPath?: string;
+  unreadCount: number;
+  viewer: { role?: string } | null;
+}) {
+  return (
+    <nav className="space-y-2">
+      <NavLink href="/feed" active={currentPath === "/feed"}>
+        Feeds
+      </NavLink>
+      <NavLink href="/tags" active={currentPath === "/tags"}>
+        Tags
+      </NavLink>
+      {viewer ? (
+        <NavLink href="/inbox" active={currentPath === "/inbox"}>
+          Inbox{unreadCount > 0 ? ` (${unreadCount})` : ""}
+        </NavLink>
+      ) : null}
+      {viewer?.role === "admin" ? (
+        <NavLink href="/admin" active={currentPath?.startsWith("/admin")}>
+          Admin
+        </NavLink>
+      ) : null}
+    </nav>
   );
 }
 
